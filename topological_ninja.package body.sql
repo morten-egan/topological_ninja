@@ -2,6 +2,43 @@ create or replace package body topological_ninja
 
 as
 
+  function value_or_key_in_dep_list (
+    p_value_in              varchar2
+    , p_dependency_list     topo_dependency_list
+  )
+  return boolean
+
+  as
+
+    l_ret_var               boolean := false;
+    l_key_idx               varchar2(4000);
+
+  begin
+
+    dbms_application_info.set_action('value_in_dependency_list');
+
+    l_key_idx := p_dependency_list.first;
+    while l_key_idx is not null loop
+      if p_dependency_list(l_key_idx) = p_value_in then
+        l_ret_var := true;
+      end if;
+      if l_key_idx = p_value_in then
+        l_ret_var := true;
+      end if;
+      l_key_idx := p_dependency_list.next(l_key_idx);
+    end loop;
+
+    dbms_application_info.set_action(null);
+
+    return l_ret_var;
+
+    exception
+      when others then
+        dbms_application_info.set_action(null);
+        raise;
+
+  end value_or_key_in_dep_list;
+
   function value_in_dependency_list (
     p_value_in              varchar2
     , p_dependency_list     topo_dependency_list
@@ -125,7 +162,7 @@ as
 
   as
 
-    l_ret_var               topo_number_list;
+    l_ret_var               topo_number_list := topo_number_list();
     l_input_list_key        varchar2(4000);
     l_checked_dependent     varchar2(4000);
     l_dependent             varchar2(4000);
@@ -134,6 +171,16 @@ as
   begin
 
     dbms_application_info.set_action('f_s');
+
+    -- Begin by putting the numbers without dependency
+    if full_list_num is not null then
+      for i in 1..full_list_num.count loop
+        if not value_or_key_in_dep_list(full_list_num(i)) then
+          l_ret_var.extend(1);
+          l_ret_var.l_ret_var.count) := full_list_num(i);
+        end if;
+      end loop;
+    end if;
 
     -- Start the intial loop of dependency list for chaining every member of dependency list.
     l_input_list_key := dependency_list.first;
@@ -160,7 +207,7 @@ as
       l_input_list_key := dependency_list.next(l_input_list_key);
     end loop;
 
-    l_ret_var := topo_number_list();
+    -- l_ret_var := topo_number_list();
 
     -- Now we move into the sorting and ordering step.
     -- Main loop over visited list from first step.
