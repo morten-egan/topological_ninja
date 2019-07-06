@@ -175,9 +175,9 @@ as
     -- Begin by putting the numbers without dependency
     if full_list_num is not null then
       for i in 1..full_list_num.count loop
-        if not value_or_key_in_dep_list(full_list_num(i)) then
+        if not value_or_key_in_dep_list(full_list_num(i),dependency_list) then
           l_ret_var.extend(1);
-          l_ret_var.l_ret_var.count) := full_list_num(i);
+          l_ret_var(l_ret_var.count) := full_list_num(i);
         end if;
       end loop;
     end if;
